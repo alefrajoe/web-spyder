@@ -1,10 +1,12 @@
 import os
+from io import BytesIO
 from pathlib import Path
 
 import requests
 import typer
 import yaml
 from bs4 import BeautifulSoup
+from PIL import Image
 
 
 def download_all_images_from_web_page(
@@ -24,11 +26,16 @@ def download_all_images_from_web_page(
     soup = BeautifulSoup(html_doc.text, "html.parser")
 
     # Looping over all images
-    images_url = [image["src"] for image in soup.find_all("img")]
+    images_url = [
+        "http:" + image["src"]
+        for image in soup.find_all("img", {"src": True})
+        if image["src"].startswith("//")
+    ]
 
     # Filter all images for the extension
     images_url = list(
         filter(
+            # Filter files according to their extension
             lambda x: str(os.path.splitext(x)[-1]).lower()
             in config_images["extension"],
             images_url,
@@ -37,7 +44,23 @@ def download_all_images_from_web_page(
 
     # Download all images
     for image_url in images_url:
-        os.system(f"wget -P {output_directory} http:{image_url}")
+        # First download the raw content of the image
+        image_raw = requests.get(image_url)
+        # Covert bytes to pixels
+        image = Image.open(BytesIO(image_raw.content))
+        # Take width and height
+        width, height = image.size
+        # If image dimensions respect constraints, download the image
+        if (
+            config_images["size"]["min_width"]
+            <= width
+            < config_images["size"]["max_width"]
+        ) and (
+            config_images["size"]["min_height"]
+            <= height
+            < config_images["size"]["max_height"]
+        ):
+            os.system(f"wget -P {output_directory} {image_url}")
 
 
 if __name__ == "__main__":

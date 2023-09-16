@@ -2,7 +2,7 @@ extension:
   - .jpg
   - .png
 size:
-  min_width: 100
+  min_width: 200
   max_width: 2000
-  min_height: 0
+  min_height: 200
   max_height: 1000
