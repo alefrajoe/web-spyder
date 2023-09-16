@@ -1,0 +1,8 @@
+extension:
+  - .jpg
+  - .png
+size:
+  min_width: 100
+  max_width: 2000
+  min_height: 0
+  max_height: 1000
